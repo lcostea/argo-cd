@@ -439,3 +439,16 @@ func TestEnforceErrorMessage(t *testing.T) {
 	assert.Equal(t, "rpc error: code = PermissionDenied desc = permission denied: project, sub: proj:default:admin", err.Error())
 
 }
+
+func TestClusterNamePolicy(t *testing.T) {
+	kubeclientset := fake.NewSimpleClientset(fakeConfigMap())
+	enf := NewEnforcer(kubeclientset, fakeNamespace, fakeConfigMapName, nil)
+	policy := `
+p, alice, clusters, get, in-cluster, allow
+p, mike, clusters, get, https://kubernetes.default.svc, allow
+`
+	_ = enf.SetUserPolicy(policy)
+
+	assert.True(t, enf.Enforce("alice", "clusters", "get", "in-cluster"))
+	//assert.True(t, enf.Enforce("mike", "clusters", "get", "in-cluster"))
+}

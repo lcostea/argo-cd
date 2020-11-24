@@ -104,6 +104,7 @@ func (s *Server) Create(ctx context.Context, q *cluster.ClusterCreateRequest) (*
 
 // Get returns a cluster from a query
 func (s *Server) Get(ctx context.Context, q *cluster.ClusterQuery) (*appv1.Cluster, error) {
+	//if err := s.enforceClusterActionByServerOrName(ctx, q.Server, q.Name); err != nil {
 	if err := s.enf.EnforceErr(ctx.Value("claims"), rbacpolicy.ResourceClusters, rbacpolicy.ActionGet, q.Server); err != nil {
 		return nil, err
 	}
@@ -112,6 +113,7 @@ func (s *Server) Get(ctx context.Context, q *cluster.ClusterQuery) (*appv1.Clust
 	if err != nil {
 		return nil, err
 	}
+
 	return s.toAPIResponse(c), nil
 }
 
@@ -304,4 +306,20 @@ func (s *Server) InvalidateCache(ctx context.Context, q *cluster.ClusterQuery) (
 		return nil, err
 	}
 	return s.toAPIResponse(cls), nil
+}
+
+func (s *Server) enforceClusterActionByServerOrName(ctx context.Context, server, name string) error {
+	if server != "" {
+		if err := s.enf.EnforceErr(ctx.Value("claims"), rbacpolicy.ResourceClusters, rbacpolicy.ActionGet, server); err != nil {
+			return err
+		}
+	}
+
+	if name != "" {
+		if err := s.enf.EnforceErr(ctx.Value("claims"), rbacpolicy.ResourceClusters, rbacpolicy.ActionGet, name); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
